@@ -1,0 +1,74 @@
+static_resources:
+  listeners:
+    - name: listeners_0
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 8080
+      filter_chains:
+        - filters:
+          - name: envoy.filters.network.http_connection_manager
+            typed_config: 
+              '@type': "type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager"
+              stat_prefix: http_proxy
+              route_config: 
+                name: all
+                virtual_hosts:
+                  - name: allbackend
+                    domains: 
+                      - '*'
+                    routes:
+                      - match: { prefix: "/micro2/"}
+                        route:
+                          prefix_rewrite: "/"
+                          cluster: micro2_cluster
+                      - match: 
+                          prefix: "/" 
+                          headers:
+                            - name: InstanceId
+                              exact_match: "1"
+                        route:
+                          cluster: micro_v1_cluster
+              http_filters:
+                  - name: envoy.filters.http.router
+  clusters:
+    - name: micro_v1_cluster
+      connect_timeout: 2s
+      type: strict_dns
+      lb_policy: round_robin
+      load_assignment:
+        cluster_name: micro_v1_cluster
+        endpoints:
+          - lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address:
+                    address: micro_v1
+                    port_value: 3012
+    - name: micro_v2_cluster
+      connect_timeout: 2s
+      type: strict_dns
+      lb_policy: round_robin
+      load_assignment:
+        cluster_name: micro_v2_cluster
+        endpoints:
+          - lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address:
+                    address: micro_v2
+                    port_value: 3013
+    - name: micro2_cluster
+      connect_timeout: 2s
+      type: strict_dns
+      lb_policy: round_robin
+      load_assignment:
+        cluster_name: micro2_cluster
+        endpoints:
+          - lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address:
+                    address: micro2
+                    port_value: 3014
+                    

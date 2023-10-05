@@ -1,0 +1,53 @@
+version: '3'
+services:
+  # front-envoy:
+  #   image: jaegertracing/all-in-one
+  #   depends_on:
+  #     micro:
+  #       condition: service_healthy
+  #     micro_v1:
+  #       condition: service_healthy
+  #     micro_v2:
+  #       condition: service_healthy
+  #     micro2:
+  #       condition: service_healthy
+  #     jaeger:
+  #       condition: service_healthy
+  #   ports:
+  #   - "${PORT_PROXY:-10000}:8000"
+  micro:
+    build:
+      context: ./micro
+    ports:
+      - "3011:3011"
+    environment:
+      MICROSERVICE2_PORT: 3014
+  micro_v1:
+    build:
+      context: ./micro_v1
+    ports:
+      - "3012:3012"
+  micro_v2:
+    build:
+      context: ./micro_v2
+    ports:
+      - "3013:3013"
+  micro2:
+    build:
+      context: ./micro2
+    ports:
+      - "3014:3014"
+  envoy:
+    image: envoyproxy/envoy:v1.18.3
+    volumes:
+      - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml
+      # - ./envoy/localhost.crt:/etc/envoy/localhost.crt
+      # - ./envoy/localhost.decrypted.key:/etc/envoy/localhost.decrypted.key
+    ports:
+      - "3015:8080"
+  jaeger:
+    image: jaegertracing/all-in-one
+    environment:
+    - COLLECTOR_ZIPKIN_HOST_PORT=9411
+    ports:
+    - "${PORT_UI:-10000}:16686"
